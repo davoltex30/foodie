@@ -9,14 +9,16 @@ import {
 } from 'react-native';
 import { CreditCard as Edit3, Trash2, Star, Clock } from 'lucide-react-native';
 import { MenuItem } from '@/types';
+import { router } from 'expo-router';
 
 interface MenuItemCardProps {
   item: MenuItem;
   onEdit: (dish: MenuItem) => void;
   onDelete: (dish: MenuItem) => void;
+  onRatingPress?: (dish: MenuItem) => void;
 }
 
-export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDelete }) => (
+export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDelete, onRatingPress }) => (
   <View style={styles.menuCard}>
     <View style={{overflow: "hidden", borderRadius: 16, position: 'relative',}}>
       <Image source={{ uri: item.image_url? item.image_url : "https://picsum.photos/200/300" }} style={styles.menuImage} />
@@ -50,7 +52,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
         <View style={styles.menuActions}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => onEdit(item)}
+            onPress={() => router.push(`/(restaurant)/edit-menu-item?itemId=${item.id}`)}
           >
             <Edit3 size={18} color="#6B7280" />
           </TouchableOpacity>
@@ -69,10 +71,13 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
         </View>
 
         <View style={styles.detailsRow}>
-          <View style={styles.ratingContainer}>
+          <TouchableOpacity 
+            style={styles.ratingContainer}
+            onPress={() => onRatingPress?.(item)}
+          >
             <Star size={16} color="#F59E0B" fill="#F59E0B" />
             <Text style={styles.rating}>{item.avgRating}</Text>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.timeContainer}>
             <Clock size={16} color="#6B7280" />
@@ -179,6 +184,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    padding: 4,
+    borderRadius: 8,
   },
   rating: {
     fontSize: 14,

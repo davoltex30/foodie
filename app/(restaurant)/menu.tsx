@@ -6,27 +6,50 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Modal,
   Image,
   Alert,
   ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Search, CreditCard as Edit, Trash2, Eye, EyeOff } from 'lucide-react-native';
+import { Plus, Search } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { MenuItem } from '@/types';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { MenuItemCard } from '@/components/MenuItemCard';
-import { supabase } from '@/utils/supabase';
-import Toast from 'react-native-toast-message';
+import { ReviewsModal } from '@/components/ReviewsModal';
 import { useAuthStore } from '@/store/authStore';
 
+// Mock reviews data - replace with actual data from your backend
+const mockReviews = [
+  {
+    id: '1',
+    customerName: 'John Doe',
+    customerAvatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100',
+    rating: 5,
+    comment: 'Absolutely delicious! The flavors were amazing and the portion size was perfect.',
+    createdAt: new Date('2024-01-10'),
+  },
+  {
+    id: '2',
+    customerName: 'Jane Smith',
+    customerAvatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=100',
+    rating: 4,
+    comment: 'Really good food, but took a bit longer than expected to prepare.',
+    createdAt: new Date('2024-01-08'),
+  },
+  {
+    id: '3',
+    customerName: 'Mike Johnson',
+    rating: 5,
+    comment: 'Best dish I\'ve had in a long time! Will definitely order again.',
+    createdAt: new Date('2024-01-05'),
+  },
+];
 export default function RestaurantMenuScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
 
   const restaurantProfile = useAuthStore(state => state.restaurantProfile)
   const menuItems = useRestaurantStore(state => state.menuItems)
@@ -46,11 +69,6 @@ export default function RestaurantMenuScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleEdit = (dish: MenuItem) => {
-    setEditingDish(dish);
-    setShowAddModal(true);
-  };
-
   const handleDelete = (dish: MenuItem) => {
     Alert.alert(
       'Delete Dish',
@@ -69,6 +87,10 @@ export default function RestaurantMenuScreen() {
     );
   };
 
+  const handleRatingPress = (dish: MenuItem) => {
+    setSelectedMenuItem(dish);
+    setShowReviewsModal(true);
+  };
 
   if(loading){
     return (
@@ -86,8 +108,7 @@ export default function RestaurantMenuScreen() {
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
-            setEditingDish(null);
-            setShowAddModal(true);
+            router.push('/(restaurant)/create-menu-item');
           }}
         >
           <Plus size={24} color="#FFFFFF" />
@@ -141,8 +162,8 @@ export default function RestaurantMenuScreen() {
             <MenuItemCard
               key={item.id}
               item={item}
-              onEdit={handleEdit}
               onDelete={handleDelete}
+              onRatingPress={handleRatingPress}
             />
           ))
         ) : (
@@ -155,43 +176,14 @@ export default function RestaurantMenuScreen() {
         )}
       </ScrollView>
 
-      {/* Add/Edit Modal */}
-      <Modal
-        visible={showAddModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowAddModal(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingDish ? 'Edit Dish' : 'Add New Dish'}
-            </Text>
-            <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <Text style={styles.cancelButton}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            <Input label="Dish Name" placeholder="Enter dish name" />
-            <Input label="Description" placeholder="Enter description" multiline />
-            <Input label="Price" placeholder="0.00" keyboardType="numeric" />
-            <Input label="Category" placeholder="e.g., Pizza, Pasta, Salad" />
-            <Input label="Preparation Time (minutes)" placeholder="15" keyboardType="numeric" />
-            <Input label="Image URL" placeholder="https://..." />
-
-            <Button
-              title={editingDish ? 'Update Dish' : 'Add Dish'}
-              onPress={() => {
-                // Handle save logic here
-                setShowAddModal(false);
-              }}
-              style={styles.saveButton}
-              variant="secondary"
-            />
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+      {/* Reviews Modal */}
+      <ReviewsModal
+        visible={showReviewsModal}
+        onClose={() => setShowReviewsModal(false)}
+        menuItemName={selectedMenuItem?.name || ''}
+        reviews={mockReviews}
+        averageRating={selectedMenuItem?.avgRating || 0}
+      />
     </SafeAreaView>
   );
 }
@@ -292,36 +284,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     textAlign: 'center'
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#F8F9FA'
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0'
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333333'
-  },
-  cancelButton: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '600'
-  },
-  modalContent: {
-    flex: 1,
-    padding: 20
-  },
-  saveButton: {
-    marginTop: 24
   }
 });
