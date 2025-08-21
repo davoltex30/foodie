@@ -1,68 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Image,
+  Alert,
+  ActivityIndicator
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Search, CreditCard as Edit, Trash2, Eye, EyeOff } from 'lucide-react-native';
 import { useRestaurantStore } from '@/store/restaurantStore';
-import { Dish } from '@/types';
+import { MenuItem } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { MenuItemCard } from '@/components/MenuItemCard';
+import { supabase } from '@/utils/supabase';
+import Toast from 'react-native-toast-message';
+import { useAuthStore } from '@/store/authStore';
 
 export default function RestaurantMenuScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
 
-  const { dishes, fetchDishes } = useRestaurantStore();
+  const restaurantProfile = useAuthStore(state => state.restaurantProfile)
+  const menuItems = useRestaurantStore(state => state.menuItems)
+  const loading = useRestaurantStore(state => state.loading)
+  const fetchMenuItemsWithRatings = useRestaurantStore(state => state.fetchMenuItemsWithRatings)
 
-  // Mock menu items for restaurant
-  const [menuItems, setMenuItems] = useState<Dish[]>([
-    {
-      id: '1',
-      restaurantId: '1',
-      name: 'Margherita Pizza',
-      description: 'Classic pizza with tomato sauce, mozzarella, and basil',
-      price: 16.99,
-      image: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Pizza',
-      rating: 4.6,
-      reviewCount: 45,
-      isAvailable: true,
-      ingredients: ['Tomato sauce', 'Mozzarella', 'Fresh basil'],
-      preparationTime: 15
-    },
-    {
-      id: '2',
-      restaurantId: '1',
-      name: 'Pasta Carbonara',
-      description: 'Creamy pasta with eggs, cheese, and bacon',
-      price: 18.99,
-      image: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Pasta',
-      rating: 4.8,
-      reviewCount: 32,
-      isAvailable: false,
-      ingredients: ['Pasta', 'Eggs', 'Parmesan', 'Bacon'],
-      preparationTime: 12
-    }
-  ]);
+  useEffect(() => {
+    fetchMenuItemsWithRatings(restaurantProfile?.restaurant_id)
+  }, [restaurantProfile?.restaurant_id]);
 
-  const categories = ['All', ...Array.from(new Set(menuItems.map(item => item.category)))];
+  const categories = ['All', ...Array.from(new Set(menuItems.map(item => item.category?.name)))];
 
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All' || item.category?.name === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleEdit = (dish: Dish) => {
+  const handleEdit = (dish: MenuItem) => {
     setEditingDish(dish);
     setShowAddModal(true);
   };
 
-  const handleDelete = (dish: Dish) => {
+  const handleDelete = (dish: MenuItem) => {
     Alert.alert(
       'Delete Dish',
       `Are you sure you want to delete "${dish.name}"?`,
@@ -72,12 +61,23 @@ export default function RestaurantMenuScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setMenuItems(items => items.filter(item => item.id !== dish.id));
+            console.log("delete menu item")
+            // setMenuItems(items => items.filter(item => item.id !== dish.id));
           }
         }
       ]
     );
   };
+
+
+  if(loading){
+    return (
+      <SafeAreaView style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <ActivityIndicator size="large" />
+        <Text>Loading menu...</Text>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -113,7 +113,7 @@ export default function RestaurantMenuScreen() {
           style={styles.categoryContainer}
           contentContainerStyle={styles.categoryContent}
         >
-          {categories.map((category) => (
+          {categories?.map((category) => (
             <TouchableOpacity
               key={category}
               style={[
@@ -137,10 +137,10 @@ export default function RestaurantMenuScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{gap: 10}}>
         {filteredItems.length > 0 ? (
-          filteredItems.map(dish => (
+          filteredItems.map(item => (
             <MenuItemCard
-              key={dish.id}
-              item={dish}
+              key={item.id}
+              item={item}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />

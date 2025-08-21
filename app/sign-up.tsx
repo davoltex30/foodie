@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -18,9 +18,11 @@ import { PhoneInput, PhoneInputRef } from 'rn-phone-input-field';
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');``
   const [name, setName] = useState('');
-  const [role, setRole] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState('customer');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,8 @@ export default function SignUpScreen() {
     phoneNumber?: string,
     role?: string,
     name?: string,
+    firstName?: string,
+    lastName?: string,
     address?: string,
   }>({});
   const [isDropdownFocus, setIsDropdownFocus] = useState(false);
@@ -50,6 +54,8 @@ export default function SignUpScreen() {
       phoneNumber?: string;
       role?: string;
       name?: string;
+      firstName?: string;
+      lastName?: string;
       address?: string;
     } = {};
 
@@ -86,78 +92,63 @@ export default function SignUpScreen() {
       newErrors.role = 'Role is required';
     }
 
-    // Name validation
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+    if(role === "restaurant"){
+      // Name validation
+      if (!name.trim()) {
+        newErrors.name = 'Name is required';
+      } else if (name.length < 2) {
+        newErrors.name = 'Name must be at least 2 characters';
+      }
+
     }
 
-    // Address validation
-    if (!address.trim()) {
-      newErrors.address = 'Address is required';
-    } else if (address.length < 5) {
-      newErrors.address = 'Address must be at least 5 characters';
+    if(role === "customer" || role === "courier"){
+      // first name validation
+      if (!firstName.trim()) {
+        newErrors.firstName = 'First name is required';
+      } else if (firstName.length < 2) {
+        newErrors.firstName = 'First name must be at least 2 characters';
+      }
+
+      // last name validation
+      if (!lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      } else if (lastName.length < 2) {
+        newErrors.lastName = 'Last name must be at least 2 characters';
+      }
+
+      // Address validation
+      if (!address.trim()) {
+        newErrors.address = 'Address is required';
+      } else if (address.length < 5) {
+        newErrors.address = 'Address must be at least 5 characters';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // const handleSignUp = async () => {
-  //
-  //   if (!validateForm()) return;
-  //
-  //   setLoading(true);
-  //
-  //   try {
-  //     // First, sign up the user with Supabase Auth
-  //     const { data: authData, error: authError } = await supabase.auth.signUp({
-  //       email: email,
-  //       password: password,
-  //       options: {
-  //         data: {
-  //           email: email,
-  //           name: name,
-  //           phone_number: phoneNumber,
-  //           address: address,
-  //           role: role,
-  //         }
-  //       }
-  //     });
-  //
-  //     if (authError) {
-  //       throw authError;
-  //     }
-  //
-  //     Alert.alert('Success', 'Account created successfully! Please check your email for verification.');
-  //   } catch (error) {
-  //     Alert.alert('Error', error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  //
-  // };
-
   const handleSignUp = async () => {
 
-    // if (!validateForm()) return;
+    if (!validateForm()) return;
 
     setLoading(true);
 
     try {
       // First, sign up the user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: 'davoltex30@gmail.com',
-        password: '123456789',
-        options: {
+        email: email,
+        password: password,
+        options:{
           data: {
-            first_name: 'John',
-            last_name: "Doe",
-            description: "Your best restaurant for you",
-            phone_number: "+237654099405",
-            avatar_url: "avatar_url",
-          },
+            role: role,
+            name: name,
+            first_name: firstName,
+            last_name: lastName,
+            phone_number: phoneNumber,
+            address: address,
+          }
         },
       })
 
@@ -172,6 +163,7 @@ export default function SignUpScreen() {
       setLoading(false);
     }
   };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView
@@ -182,45 +174,8 @@ export default function SignUpScreen() {
           <View style={styles.container}>
             <Text style={styles.title}>Create Account</Text>
 
-            <Input
-              label="Name"
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter your Name"
-              keyboardType="default"
-              error={errors.name}
-            />
-
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={errors.email}
-            />
-
-            <Input
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-              error={errors.password}
-            />
-
-            <Input
-              label="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Re-enter your password"
-              secureTextEntry
-              error={errors.confirmPassword}
-            />
-
             <View style={{ marginBottom: 16 }}>
-              <Text style={styles.label}>Role</Text>
+              <Text style={styles.label}>Account type</Text>
               <Dropdown
                 style={[styles.input, errors.role && styles.inputError, isDropdownFocus && { borderColor: 'blue' }]}
                 placeholderStyle={{ color: '#999999' }}
@@ -241,6 +196,75 @@ export default function SignUpScreen() {
               {errors.role && <Text style={styles.error}>{errors.role}</Text>}
             </View>
 
+            {(role === "restaurant") && (
+              <Input
+                label="Restaurant Name"
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter your Restaurant name"
+                keyboardType="default"
+                error={errors.name}
+              />
+            )}
+
+            {(role === "customer" || role === "courier") && (
+              <>
+                <Input
+                  label="First Name"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  placeholder="Enter your First Name"
+                  keyboardType="default"
+                  error={errors.firstName}
+                />
+
+                <Input
+                  label="Last Name"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  placeholder="Enter your Last Name"
+                  keyboardType="default"
+                  error={errors.lastName}
+                />
+                <Input
+                  label="Address"
+                  value={address}
+                  onChangeText={setAddress}
+                  placeholder="Enter your address"
+                  keyboardType="default"
+                  error={errors.address}
+                />
+              </>
+            )}
+
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={errors.email}
+            />
+
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              // secureTextEntry
+              error={errors.password}
+            />
+
+            <Input
+              label="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Re-enter your password"
+              // secureTextEntry
+              error={errors.confirmPassword}
+            />
+
             <View style={{ marginBottom: 16 }}>
               <Text style={styles.label}>Phone Number</Text>
               <PhoneInput
@@ -256,15 +280,6 @@ export default function SignUpScreen() {
               {errors.phoneNumber && <Text style={styles.error}>{errors.phoneNumber}</Text>}
             </View>
 
-            <Input
-              label="Address"
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Enter your address"
-              keyboardType="default"
-              error={errors.address}
-            />
-
             <TouchableOpacity
               style={styles.button}
               onPress={handleSignUp}
@@ -279,7 +294,6 @@ export default function SignUpScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 };
 const styles = StyleSheet.create({

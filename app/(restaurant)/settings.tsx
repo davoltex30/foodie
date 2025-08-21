@@ -14,6 +14,8 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { router } from 'expo-router';
 import { Card } from '@/components/ui/Card';
+import Toast from 'react-native-toast-message';
+import { supabase } from '@/utils/supabase';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
@@ -41,9 +43,10 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true }: Se
 }
 
 export default function RestaurantSettingsScreen() {
-  const { user, logout } = useAuthStore();
+  const restaurantProfile = useAuthStore(state => state.restaurantProfile);
+  const signOut = useAuthStore(state => state.signOut);
 
-  const handleLogout = () => {
+  const handleLogout = (scope: 'global' | 'local' | 'others' = 'local') => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -52,10 +55,7 @@ export default function RestaurantSettingsScreen() {
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => {
-            logout();
-            router.replace('/role-selection');
-          }
+          onPress: signOut
         }
       ]
     );
@@ -114,12 +114,12 @@ export default function RestaurantSettingsScreen() {
         <Card style={styles.profileCard}>
           <View style={styles.profileInfo}>
             <Image
-              source={{ uri: user?.profileImage || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200' }}
+              source={{ uri: restaurantProfile?.logo_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200' }}
               style={styles.profileImage}
             />
             <View style={styles.profileText}>
-              <Text style={styles.profileName}>{user?.name}</Text>
-              <Text style={styles.profileEmail}>{user?.email}</Text>
+              <Text style={styles.profileName}>{restaurantProfile?.name}</Text>
+              <Text style={styles.profileEmail}>{restaurantProfile?.email}</Text>
               <View style={styles.roleBadge}>
                 <Text style={styles.roleText}>Restaurant Owner</Text>
               </View>

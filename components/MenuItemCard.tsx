@@ -8,18 +8,18 @@ import {
   Image,
 } from 'react-native';
 import { CreditCard as Edit3, Trash2, Star, Clock } from 'lucide-react-native';
-import { Dish } from '@/types';
+import { MenuItem } from '@/types';
 
 interface MenuItemCardProps {
-  item: Dish;
-  onEdit: (dish: Dish) => void;
-  onDelete: (dish: Dish) => void;
+  item: MenuItem;
+  onEdit: (dish: MenuItem) => void;
+  onDelete: (dish: MenuItem) => void;
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDelete }) => (
   <View style={styles.menuCard}>
     <View style={{overflow: "hidden", borderRadius: 16, position: 'relative',}}>
-      <Image source={{ uri: item.image }} style={styles.menuImage} />
+      <Image source={{ uri: item.image_url? item.image_url : "https://picsum.photos/200/300" }} style={styles.menuImage} />
     </View>
 
 
@@ -28,16 +28,16 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
         <View style={styles.menuInfo}>
           <Text style={styles.menuName}>{item.name}</Text>
           <View style={styles.categoryRow}>
-            <Text style={styles.menuCategory}>{item.category}</Text>
+            <Text style={styles.menuCategory}>{item.category?.name}</Text>
             <View style={[
               styles.availabilityBadge,
-              item.isAvailable ? styles.availableBadge : styles.soldOutBadge
+              item.is_available ? styles.availableBadge : styles.soldOutBadge
             ]}>
               <Text style={[
                 styles.availabilityText,
-                item.isAvailable ? styles.availableText : styles.soldOutText
+                item.is_available ? styles.availableText : styles.soldOutText
               ]}>
-                {item.isAvailable ? 'Available' : 'Sold Out'}
+                {item.is_available ? 'Available' : 'Sold Out'}
               </Text>
             </View>
           </View>
@@ -65,18 +65,18 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
 
       <View style={styles.menuDetails}>
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+          <Text style={styles.price}>${item.price}</Text>
         </View>
 
         <View style={styles.detailsRow}>
           <View style={styles.ratingContainer}>
             <Star size={16} color="#F59E0B" fill="#F59E0B" />
-            <Text style={styles.rating}>{item.rating}</Text>
+            <Text style={styles.rating}>{item.avgRating}</Text>
           </View>
 
           <View style={styles.timeContainer}>
             <Clock size={16} color="#6B7280" />
-            <Text style={styles.time}>{item.preparationTime} min</Text>
+            <Text style={styles.time}>{item.prep_time} min</Text>
           </View>
         </View>
       </View>

@@ -6,7 +6,7 @@ import { UserRole } from '@/types';
 
 export default function RoleSelectionScreen() {
   const handleRoleSelect = (role: UserRole) => {
-    router.navigate(`/login?role=${role}`);
+    router.push(`/login?role=${role}`);
   };
 
   return (

@@ -1,3 +1,5 @@
+import { Category, Rating } from '@/store/restaurantStore';
+
 export type UserRole = 'customer' | 'restaurant';
 
 export interface User {
@@ -30,19 +32,70 @@ export interface Restaurant {
   };
 }
 
+export interface RestaurantProfile {
+  restaurant_id: string;
+  name: string;
+  email: string;
+  description: string;
+  location: string;
+  phone_number: string;
+  is_active: boolean;
+  logo_url: string;
+  banner_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerProfile {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  address: string;
+  location: string;
+  phone_number: string;
+  is_active: boolean;
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+
+
 export interface Dish {
   id: string;
-  restaurantId: string;
+  restaurant: string;
   name: string;
   description: string;
   price: number;
-  image: string;
+  image_url: string;
   category: string;
-  rating: number;
-  reviewCount: number;
-  isAvailable: boolean;
-  ingredients: string[];
-  preparationTime: number;
+  // rating: number;
+  // reviewCount: number;
+  is_available: boolean;
+  // ingredients: string[];
+  prep_time: number;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string,
+  price: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  image_url: string | null;
+  is_available: boolean;
+  prep_time: number;
+  restaurant: string;
+  category?: {
+    name: string
+  };
+  ratings: Array<{
+    rating: number,
+  }>
+  avgRating?: number;
+  ratingCount?: number;
 }
 
 export interface CartItem extends Dish {

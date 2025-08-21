@@ -1,139 +1,356 @@
+// stores/useRestaurantStore.ts
 import { create } from 'zustand';
-import { Restaurant, Dish } from '@/types';
+import { createClient } from '@supabase/supabase-js';
+import { MenuItem } from '@/types';
+import { supabase } from '@/utils/supabase';
 
-interface RestaurantState {
-  restaurants: Restaurant[];
-  dishes: Dish[];
-  nearbyRestaurants: Restaurant[];
-  isLoading: boolean;
-  fetchRestaurants: () => Promise<void>;
-  fetchDishes: () => Promise<void>;
-  fetchNearbyRestaurants: (latitude: number, longitude: number) => Promise<void>;
+// Types
+export interface Rating {
+  rating: number;
 }
 
-const mockRestaurants: Restaurant[] = [
-  {
-    id: '1',
-    name: 'Bella Italia',
-    description: 'Authentic Italian cuisine with fresh ingredients',
-    image: 'https://images.pexels.com/photos/262978/pexels-photo-262978.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.5,
-    reviewCount: 127,
-    deliveryTime: '25-35 min',
-    deliveryFee: 2.99,
-    location: {
-      latitude: 37.7749,
-      longitude: -122.4194,
-      address: '123 Italian St, San Francisco, CA'
-    },
-    cuisineType: 'Italian',
-    isOpen: true,
-    operatingHours: { open: '11:00', close: '23:00' }
-  },
-  {
-    id: '2',
-    name: 'Sushi Zen',
-    description: 'Premium sushi and Japanese dishes',
-    image: 'https://images.pexels.com/photos/357573/pexels-photo-357573.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.8,
-    reviewCount: 89,
-    deliveryTime: '30-40 min',
-    deliveryFee: 3.99,
-    location: {
-      latitude: 37.7849,
-      longitude: -122.4094,
-      address: '456 Sushi Ave, San Francisco, CA'
-    },
-    cuisineType: 'Japanese',
-    isOpen: true,
-    operatingHours: { open: '12:00', close: '22:00' }
-  },
-  {
-    id: '3',
-    name: 'Burger Palace',
-    description: 'Gourmet burgers and sides',
-    image: 'https://images.pexels.com/photos/1639562/pexels-photo-1639562.jpeg?auto=compress&cs=tinysrgb&w=400',
-    rating: 4.2,
-    reviewCount: 203,
-    deliveryTime: '20-30 min',
-    deliveryFee: 1.99,
-    location: {
-      latitude: 37.7649,
-      longitude: -122.4294,
-      address: '789 Burger Blvd, San Francisco, CA'
-    },
-    cuisineType: 'American',
-    isOpen: false,
-    operatingHours: { open: '10:00', close: '21:00' }
-  }
-];
+export interface Category {
+  name: string;
+}
 
-const mockDishes: Dish[] = [
-  {
-    id: '1',
-    restaurantId: '1',
-    name: 'Margherita Pizza',
-    description: 'Classic pizza with tomato sauce, mozzarella, and basil',
-    price: 16.99,
-    image: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400',
-    category: 'Pizza',
-    rating: 4.6,
-    reviewCount: 45,
-    isAvailable: true,
-    ingredients: ['Tomato sauce', 'Mozzarella', 'Fresh basil'],
-    preparationTime: 15
-  },
-  {
-    id: '2',
-    restaurantId: '2',
-    name: 'Salmon Sashimi',
-    description: 'Fresh Atlantic salmon, expertly sliced',
-    price: 24.99,
-    image: 'https://images.pexels.com/photos/248444/pexels-photo-248444.jpeg?auto=compress&cs=tinysrgb&w=400',
-    category: 'Sashimi',
-    rating: 4.9,
-    reviewCount: 32,
-    isAvailable: true,
-    ingredients: ['Fresh salmon', 'Wasabi', 'Pickled ginger'],
-    preparationTime: 10
-  },
-  {
-    id: '3',
-    restaurantId: '3',
-    name: 'Classic Burger',
-    description: 'Beef patty with lettuce, tomato, and special sauce',
-    price: 12.99,
-    image: 'https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg?auto=compress&cs=tinysrgb&w=400',
-    category: 'Burgers',
-    rating: 4.3,
-    reviewCount: 78,
-    isAvailable: true,
-    ingredients: ['Beef patty', 'Lettuce', 'Tomato', 'Special sauce'],
-    preparationTime: 12
-  }
-];
 
-export const useRestaurantStore = create<RestaurantState>((set) => ({
-  restaurants: [],
-  dishes: [],
-  nearbyRestaurants: [],
-  isLoading: false,
 
-  fetchRestaurants: async () => {
-    set({ isLoading: true });
-    await new Promise(resolve => setTimeout(resolve, 800));
-    set({ restaurants: mockRestaurants, isLoading: false });
+interface RestaurantState {
+  menuItems: MenuItem[];
+  loading: boolean;
+  error: string | null;
+  currentRestaurantId: string | null;
+
+  // Actions
+  setCurrentRestaurant: (restaurantId: string) => void;
+  fetchMenuItems: (restaurantId?: string) => Promise<void>;
+  fetchMenuItemsWithRatings: (restaurantId?: string) => Promise<void>;
+  searchMenuItems: (searchTerm: string, restaurantId?: string) => Promise<MenuItem[]>;
+  getMenuByCategory: (categoryId: string, restaurantId?: string) => Promise<MenuItem[]>;
+  getAvailableItemsWithPrepTime: (maxPrepTime?: number, restaurantId?: string) => Promise<MenuItem[]>;
+  createMenuItem: (menuItemData: Partial<MenuItem>) => Promise<MenuItem | null>;
+  updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<MenuItem | null>;
+  toggleMenuItemAvailability: (id: string) => Promise<void>;
+  deleteMenuItem: (id: string) => Promise<void>;
+  refreshMenuItems: () => Promise<void>;
+  clearError: () => void;
+}
+
+export const useRestaurantStore = create<RestaurantState>((set, get) => ({
+  // Initial state
+  menuItems: [],
+  loading: false,
+  error: null,
+  currentRestaurantId: null,
+
+  // Set current restaurant
+  setCurrentRestaurant: (restaurantId: string) => {
+    set({ currentRestaurantId: restaurantId });
   },
 
-  fetchDishes: async () => {
-    set({ isLoading: true });
-    await new Promise(resolve => setTimeout(resolve, 600));
-    set({ dishes: mockDishes, isLoading: false });
+  // Fetch menu items without ratings
+  fetchMenuItems: async (restaurantId?: string) => {
+    const targetRestaurantId = restaurantId || get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      set({ error: 'No restaurant ID provided' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:categories(name)
+        `)
+        .eq('restaurant', targetRestaurantId)
+        .eq('is_available', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      set({ menuItems: data || [], loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to fetch menu items',
+        loading: false
+      });
+    }
   },
 
-  fetchNearbyRestaurants: async (latitude: number, longitude: number) => {
-    set({ isLoading: true });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    set({ nearbyRestaurants: mockRestaurants, isLoading: false });
+  // Fetch menu items with ratings (main function)
+  fetchMenuItemsWithRatings: async (restaurantId?: string) => {
+    const targetRestaurantId = restaurantId || get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      set({ error: 'No restaurant ID provided' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:categories(name),
+          ratings:ratings(rating)
+        `)
+        .eq('restaurant', targetRestaurantId)
+        .eq('is_available', true)
+        .order('category');
+
+      if (error) throw error;
+
+      // Calculate average ratings
+      const menuItemsWithRatings = (data || []).map(item => {
+        const ratings = item.ratings.map((r: Rating) => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum: any, rating: any) => sum + rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...item,
+          avgRating: Math.round(avgRating * 10) / 10,
+          ratingCount: ratings.length
+        };
+      });
+
+      set({ menuItems: menuItemsWithRatings, loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to fetch menu items with ratings',
+        loading: false
+      });
+    }
+  },
+
+  // Search menu items
+  searchMenuItems: async (searchTerm: string, restaurantId?: string) => {
+    const targetRestaurantId = restaurantId || get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      throw new Error('No restaurant ID provided');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:categories(name),
+          ratings:ratings(rating)
+        `)
+        .eq('restaurant', targetRestaurantId)
+        .ilike('description', `%${searchTerm}%`)
+        .eq('is_available', true);
+
+      if (error) throw error;
+
+      // Calculate average ratings
+      return (data || []).map(item => {
+        const ratings = item.ratings.map((r: Rating) => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum: any, rating: any) => sum + rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...item,
+          avgRating: Math.round(avgRating * 10) / 10,
+          ratingCount: ratings.length
+        };
+      });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to search menu items');
+    }
+  },
+
+  // Get menu items by category
+  getMenuByCategory: async (categoryId: string, restaurantId?: string) => {
+    const targetRestaurantId = restaurantId || get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      throw new Error('No restaurant ID provided');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:categories(name),
+          ratings:ratings(rating)
+        `)
+        .eq('restaurant', targetRestaurantId)
+        .eq('category', categoryId)
+        .eq('is_available', true);
+
+      if (error) throw error;
+
+      // Calculate average ratings
+      return (data || []).map(item => {
+        const ratings = item.ratings.map((r: Rating) => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...item,
+          avgRating: Math.round(avgRating * 10) / 10,
+          ratingCount: ratings.length
+        };
+      });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to fetch menu by category');
+    }
+  },
+
+  // Get available items with prep time filter
+  getAvailableItemsWithPrepTime: async (maxPrepTime?: number, restaurantId?: string) => {
+    const targetRestaurantId = restaurantId || get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      throw new Error('No restaurant ID provided');
+    }
+
+    try {
+      let query = supabase
+        .from('menu_items')
+        .select(`
+          *,
+          category:categories(name),
+          ratings:ratings(rating)
+        `)
+        .eq('restaurant', targetRestaurantId)
+        .eq('is_available', true)
+        .order('prep_time', { ascending: true });
+
+      if (maxPrepTime) {
+        query = query.lte('prep_time', maxPrepTime);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Calculate average ratings
+      return (data || []).map(item => {
+        const ratings = item.ratings.map((r: Rating) => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...item,
+          avgRating: Math.round(avgRating * 10) / 10,
+          ratingCount: ratings.length
+        };
+      });
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to fetch menu items');
+    }
+  },
+
+  // Create new menu item
+  createMenuItem: async (menuItemData: Partial<MenuItem>) => {
+    const targetRestaurantId = get().currentRestaurantId;
+    if (!targetRestaurantId) {
+      set({ error: 'No restaurant ID provided' });
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .insert([{
+          ...menuItemData,
+          restaurant: targetRestaurantId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh the menu items
+      get().refreshMenuItems();
+
+      return data;
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to create menu item' });
+      return null;
+    }
+  },
+
+  // Update menu item
+  updateMenuItem: async (id: string, updates: Partial<MenuItem>) => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      set(state => ({
+        menuItems: state.menuItems.map(item =>
+          item.id === id ? { ...item, ...data } : item
+        )
+      }));
+
+      return data;
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to update menu item' });
+      return null;
+    }
+  },
+
+  // Toggle menu item availability
+  toggleMenuItemAvailability: async (id: string) => {
+    const item = get().menuItems.find(item => item.id === id);
+    if (!item) return;
+
+    try {
+      await get().updateMenuItem(id, {
+        is_available: !item.is_available
+      });
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to toggle availability' });
+    }
+  },
+
+  // Delete menu item
+  deleteMenuItem: async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      set(state => ({
+        menuItems: state.menuItems.filter(item => item.id !== id)
+      }));
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to delete menu item' });
+    }
+  },
+
+  // Refresh menu items
+  refreshMenuItems: async () => {
+    await get().fetchMenuItemsWithRatings();
+  },
+
+  // Clear error
+  clearError: () => {
+    set({ error: null });
   },
 }));

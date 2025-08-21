@@ -47,7 +47,7 @@ const popularDishes = [
 ];
 
 export default function RestaurantDashboardScreen() {
-  const { user } = useAuthStore();
+  const restaurantProfile = useAuthStore(state => state.restaurantProfile)
   const [todayStats, setTodayStats] = useState({
     orders: 32,
     revenue: 847.50,
@@ -59,7 +59,7 @@ export default function RestaurantDashboardScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Welcome back, {user?.name}!</Text>
+          <Text style={styles.greeting}>Welcome back, {restaurantProfile?.name}!</Text>
           <Text style={styles.subGreeting}>Here's your restaurant overview</Text>
         </View>
         <TouchableOpacity style={styles.notificationButton}>

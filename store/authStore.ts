@@ -1,52 +1,122 @@
-import { create } from 'zustand';
-import { User, UserRole } from '@/types';
+import { create } from 'zustand'
+import { Session } from '@supabase/auth-js/src/lib/types'
+import { CustomerProfile, RestaurantProfile } from '@/types';
+import { supabase } from '@/utils/supabase';
+import { router } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
 interface AuthState {
-  user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
-  logout: () => void;
-  setUser: (user: User) => void;
+  session: Session | null;
+  restaurantProfile: RestaurantProfile | null;
+  customerProfile: CustomerProfile | null;
+  initializeSession: () => Promise<void>;
+  signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  fetchRestaurantProfile: (user_id: string) => Promise<void>;
+  fetchCustomerProfile: (user_id: string) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
+export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
-  isLoading: false,
+  session: null,
+  restaurantProfile: null,
+  customerProfile: null,
+  initializeSession: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      set({
+        session,
+        isAuthenticated: session !== null,
+      });
 
-  login: async (email: string, password: string, role: UserRole) => {
-    set({ isLoading: true });
+      const { fetchRestaurantProfile, fetchCustomerProfile} = get()
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const mockUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name: role === 'customer' ? 'John Doe' : 'Restaurant Owner',
-      role,
-      profileImage: role === 'customer'
-        ? 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200'
-        : 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200'
-    };
-
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      isLoading: false
-    });
+      if (session?.user.user_metadata.role === 'restaurant') {
+        await fetchRestaurantProfile(session.user.id)
+      }else if(session?.user.user_metadata.role === 'customer') {
+        await fetchCustomerProfile(session.user.id)
+      }else{
+        //Todo add fetch courier profile here
+      }
+      if (session &&  session.user.user_metadata.role === 'customer') {
+        router.replace('/(customer)');
+      } else {
+        router.replace('/(restaurant)');
+      }
+    } catch (error) {
+      set({ session: null, isAuthenticated: false, restaurantProfile: null });
+    }
   },
+  fetchRestaurantProfile: async (user_id: string) => {
+    try {
+      const { data: restaurantData, error: restaurantError } =
+        await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('restaurant_id', user_id)
+          .single();
 
-  logout: () => {
-    set({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false
-    });
+      if (restaurantError) {
+        console.error('Error fetching restaurant profile:', restaurantError);
+        return;
+      }
+      set({ restaurantProfile: restaurantData });
+    } catch (error) {
+      console.error('Unexpected error fetching restaurant profile:', error);
+      Toast.show({
+        position: 'bottom',
+        type: 'error',
+        text1: 'Failed to fetch restaurant profile',
+        text2: 'An unexpected error occurred'
+      });
+    }
   },
+  fetchCustomerProfile: async (user_id: string) => {
+    try {
+      const { data: customerProfile, error: customerProfileError } =
+        await supabase
+          .from('customers')
+          .select('*')
+          .eq('customer_id', user_id)
+          .single();
 
-  setUser: (user: User) => {
-    set({ user, isAuthenticated: true });
-  }
+      if (customerProfileError) {
+        console.error('Error fetching customer profile:', customerProfileError);
+        Toast.show({
+          position: 'bottom',
+          type: 'error',
+          text1: 'Failed to fetch customer profile',
+          text2: customerProfileError.message
+        });
+        return;
+      }
+      set({ customerProfile: customerProfile });
+    } catch (error) {
+      console.error('Unexpected error fetching customer profile:', error);
+      Toast.show({
+        position: 'bottom',
+        type: 'error',
+        text1: 'Failed to fetch customer profile',
+        text2: 'An unexpected error occurred'
+      });
+    }
+  },
+  login: async () => {
+
+  },
+  signOut: async () => {
+    try {
+      await supabase.auth.signOut({scope: "local"});
+      set({ session: null, isAuthenticated: false, restaurantProfile: null });
+      router.replace('/role-selection');
+    } catch (error) {
+      Toast.show({
+        position: 'bottom',
+        type: 'error',
+        text1: 'Error signing out',
+        text2: error.message
+      });
+    }
+  },
 }));
