@@ -10,14 +10,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, Star } from 'lucide-react-native';
+import {format} from "date-fns";
 
 interface Review {
-  id: string;
-  customerName: string;
-  customerAvatar?: string;
-  rating: number;
-  comment: string;
-  createdAt: Date;
+  id: string,
+  rating: number,
+  comment?: string,
+  customer: {
+    first_name: string,
+    last_name: string,
+    avatar_url?: string,
+  },
+  created_at: string,
 }
 
 interface ReviewsModalProps {
@@ -79,22 +83,19 @@ export function ReviewsModal({
                   <View style={styles.customerInfo}>
                     <Image
                       source={{ 
-                        uri: review.customerAvatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100'
+                        uri: review.customer.avatar_url || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100'
                       }}
                       style={styles.avatar}
                     />
                     <View>
-                      <Text style={styles.customerName}>{review.customerName}</Text>
+                      <Text style={styles.customerName}>{review.customer.first_name} {review.customer.last_name}</Text>
                       <Text style={styles.reviewDate}>
-                        {review.createdAt.toLocaleDateString()}
+                        {format(review.created_at, 'dd/MM/yyyy HH:mm')}
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.ratingContainer}>
-                    <View style={styles.starsContainer}>
-                      {renderStars(review.rating)}
-                    </View>
-                    <Text style={styles.ratingText}>{review.rating}</Text>
+                  <View style={styles.starsContainer}>
+                    {renderStars(review.rating)}
                   </View>
                 </View>
                 <Text style={styles.comment}>{review.comment}</Text>
@@ -191,16 +192,13 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: '600',
+    textTransform: 'capitalize',
     color: '#333333',
     marginBottom: 2,
   },
   reviewDate: {
     fontSize: 12,
     color: '#999999',
-  },
-  ratingContainer: {
-    alignItems: 'center',
-    gap: 4,
   },
   ratingText: {
     fontSize: 12,

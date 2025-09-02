@@ -13,12 +13,11 @@ import { router } from 'expo-router';
 
 interface MenuItemCardProps {
   item: MenuItem;
-  onEdit: (dish: MenuItem) => void;
   onDelete: (dish: MenuItem) => void;
   onRatingPress?: (dish: MenuItem) => void;
 }
 
-export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDelete, onRatingPress }) => (
+export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onDelete, onRatingPress }) => (
   <View style={styles.menuCard}>
     <View style={{overflow: "hidden", borderRadius: 16, position: 'relative',}}>
       <Image source={{ uri: item.image_url? item.image_url : "https://picsum.photos/200/300" }} style={styles.menuImage} />
@@ -52,7 +51,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
         <View style={styles.menuActions}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.push(`/(restaurant)/edit-menu-item?itemId=${item.id}`)}
+            onPress={() => router.push(`/(restaurant)/menu/edit-menu-item?itemId=${item.id}`)}
           >
             <Edit3 size={18} color="#6B7280" />
           </TouchableOpacity>
@@ -81,7 +80,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onEdit, onDele
 
           <View style={styles.timeContainer}>
             <Clock size={16} color="#6B7280" />
-            <Text style={styles.time}>{item.prep_time} min</Text>
+            <Text style={styles.time}>{item.est_prep_time} min</Text>
           </View>
         </View>
       </View>

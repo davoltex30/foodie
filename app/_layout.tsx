@@ -2,7 +2,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useAuthStore } from '@/store/authStore';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 import Toast from 'react-native-toast-message';
 import { useAppStateListener } from '@/hooks/useAppStateListener';
 import { useEffect } from 'react';
@@ -23,6 +22,7 @@ export default function RootLayout() {
 
   //TODO add the react-native-keyboard-controller to the signup, login, after build
   //TODO  change the rn-phone-input in sign to react-native-phone-number-input after build
+
   return (
     <>
       {/*<KeyboardProvider>*/}

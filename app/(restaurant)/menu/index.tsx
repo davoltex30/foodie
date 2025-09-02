@@ -19,32 +19,6 @@ import { MenuItemCard } from '@/components/MenuItemCard';
 import { ReviewsModal } from '@/components/ReviewsModal';
 import { useAuthStore } from '@/store/authStore';
 
-// Mock reviews data - replace with actual data from your backend
-const mockReviews = [
-  {
-    id: '1',
-    customerName: 'John Doe',
-    customerAvatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100',
-    rating: 5,
-    comment: 'Absolutely delicious! The flavors were amazing and the portion size was perfect.',
-    createdAt: new Date('2024-01-10'),
-  },
-  {
-    id: '2',
-    customerName: 'Jane Smith',
-    customerAvatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=100',
-    rating: 4,
-    comment: 'Really good food, but took a bit longer than expected to prepare.',
-    createdAt: new Date('2024-01-08'),
-  },
-  {
-    id: '3',
-    customerName: 'Mike Johnson',
-    rating: 5,
-    comment: 'Best dish I\'ve had in a long time! Will definitely order again.',
-    createdAt: new Date('2024-01-05'),
-  },
-];
 export default function RestaurantMenuScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -108,7 +82,7 @@ export default function RestaurantMenuScreen() {
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
-            router.push('/(restaurant)/create-menu-item');
+            router.push('/menu/create-menu-item');
           }}
         >
           <Plus size={24} color="#FFFFFF" />
@@ -124,7 +98,7 @@ export default function RestaurantMenuScreen() {
             placeholder="Search dishes..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#999999"
+            placeholderTextColor={'#999999'}
           />
         </View>
 
@@ -155,7 +129,6 @@ export default function RestaurantMenuScreen() {
           ))}
         </ScrollView>
       </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{gap: 10}}>
         {filteredItems.length > 0 ? (
           filteredItems.map(item => (
@@ -181,7 +154,7 @@ export default function RestaurantMenuScreen() {
         visible={showReviewsModal}
         onClose={() => setShowReviewsModal(false)}
         menuItemName={selectedMenuItem?.name || ''}
-        reviews={mockReviews}
+        reviews={selectedMenuItem?.ratings || []}
         averageRating={selectedMenuItem?.avgRating || 0}
       />
     </SafeAreaView>

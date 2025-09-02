@@ -1,14 +1,19 @@
-import { Category, Rating } from '@/store/restaurantStore';
 
 export type UserRole = 'customer' | 'restaurant';
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready_for_pickup' | 'picked_up' | 'delivered' | 'on_the_way' | 'arrived' | 'refunded' | 'cancelled';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  profileImage?: string;
-}
+export const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  'pending': ['confirmed', 'cancelled'],
+  'confirmed': ['preparing', 'cancelled'],
+  'preparing': ['ready_for_pickup', 'cancelled'],
+  'ready_for_pickup': ['picked_up', 'cancelled'],
+  'picked_up': ['on_the_way', 'cancelled'],
+  'on_the_way': ['arrived'],
+  'arrived': ['delivered'],
+  'delivered': ['refunded'], // only for disputes
+  'cancelled': [], // final state
+  'refunded': []   // final state
+};
 
 export interface Restaurant {
   id: string;
@@ -46,6 +51,12 @@ export interface RestaurantProfile {
   updated_at: string;
 }
 
+export interface ImageData {
+  uri: string;
+  fileExtension: string | null;
+  base64: string | null;
+}
+
 export interface CustomerProfile {
   customer_id: string;
   first_name: string;
@@ -60,8 +71,6 @@ export interface CustomerProfile {
   updated_at: string;
 }
 
-
-
 export interface Dish {
   id: string;
   restaurant: string;
@@ -74,7 +83,33 @@ export interface Dish {
   // reviewCount: number;
   is_available: boolean;
   // ingredients: string[];
-  prep_time: number;
+  est_prep_time: number;
+}
+
+export interface Category {
+  id: string,
+  name: string;
+  created_at: string;
+}
+
+export interface Rating {
+  id: string,
+  menu_item: string;
+  customer: string;
+  rating: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+export interface MenuItemFormData {
+  name: string;
+  description?: string;
+  price: number;
+  est_prep_time: number;
+  image_url: string;
+  restaurant: string;
+  category: string;
+  is_available: boolean;
 }
 
 export interface MenuItem {
@@ -86,13 +121,22 @@ export interface MenuItem {
   updated_at: string;
   image_url: string | null;
   is_available: boolean;
-  prep_time: number;
+  est_prep_time: number;
   restaurant: string;
   category?: {
+    id: string,
     name: string
   };
   ratings: Array<{
+    id: string,
     rating: number,
+    comment?: string,
+    customer: {
+      first_name: string,
+      last_name: string,
+      avatar_url?: string,
+    },
+    created_at: string,
   }>
   avgRating?: number;
   ratingCount?: number;
@@ -105,25 +149,44 @@ export interface CartItem extends Dish {
 
 export interface Order {
   id: string;
-  customerId: string;
-  restaurantId: string;
-  restaurantName: string;
-  items: CartItem[];
-  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-  totalAmount: number;
+  customer: string;
+  restaurant: string;
+  courier?: string;
+  order_items: Array<{
+    id: string,
+    menu_item: {
+      id: string,
+      name: string,
+      image_url: string,
+    },
+    quantity: number,
+    price: number,
+    created_at: string,
+  }>;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready_for_pickup' | 'picked_up' | 'delivered' | 'on_the_way' |  'arrived' | 'refunded' | 'cancelled';
+  total_amount: number;
   deliveryFee: number;
-  createdAt: Date;
-  estimatedDelivery?: Date;
-  deliveryAddress: string;
+  est_delivery_time: number;
+  delivery_longitude: number;
+  delivery_latitude: number;
+  created_at: string;
+  updated_at: string;
+  accepted_at?: string;
+  prepared_at?: string;
+  picked_up_at?: string;
+  delivered_at?: string;
 }
 
-export interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  targetId: string; // restaurant or dish ID
-  targetType: 'restaurant' | 'dish';
-  rating: number;
-  comment: string;
-  createdAt: Date;
+
+export interface OrderItem{
+  id: string,
+  order: string,
+  menu_item: {
+    id: string,
+    name: string,
+    image_url: string,
+  },
+  quantity: number,
+  price: number,
+  created_at: string,
 }

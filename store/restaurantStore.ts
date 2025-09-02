@@ -1,22 +1,14 @@
 // stores/useRestaurantStore.ts
 import { create } from 'zustand';
-import { createClient } from '@supabase/supabase-js';
-import { MenuItem } from '@/types';
+import { MenuItem, Category, MenuItemFormData } from '@/types';
 import { supabase } from '@/utils/supabase';
-
-// Types
-export interface Rating {
-  rating: number;
-}
-
-export interface Category {
-  name: string;
-}
-
+import Toast from 'react-native-toast-message';
+import { router } from 'expo-router';
 
 
 interface RestaurantState {
   menuItems: MenuItem[];
+  categories: Category[];
   loading: boolean;
   error: string | null;
   currentRestaurantId: string | null;
@@ -24,11 +16,12 @@ interface RestaurantState {
   // Actions
   setCurrentRestaurant: (restaurantId: string) => void;
   fetchMenuItems: (restaurantId?: string) => Promise<void>;
+  fetchCategories: () => Promise<void>;
   fetchMenuItemsWithRatings: (restaurantId?: string) => Promise<void>;
   searchMenuItems: (searchTerm: string, restaurantId?: string) => Promise<MenuItem[]>;
   getMenuByCategory: (categoryId: string, restaurantId?: string) => Promise<MenuItem[]>;
   getAvailableItemsWithPrepTime: (maxPrepTime?: number, restaurantId?: string) => Promise<MenuItem[]>;
-  createMenuItem: (menuItemData: Partial<MenuItem>) => Promise<MenuItem | null>;
+  createMenuItem: (menuItemData: MenuItemFormData) => Promise<void>;
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<MenuItem | null>;
   toggleMenuItemAvailability: (id: string) => Promise<void>;
   deleteMenuItem: (id: string) => Promise<void>;
@@ -42,6 +35,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
   loading: false,
   error: null,
   currentRestaurantId: null,
+  categories: [],
 
   // Set current restaurant
   setCurrentRestaurant: (restaurantId: string) => {
@@ -80,6 +74,27 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
     }
   },
 
+  // Fetch categories
+  fetchCategories: async () => {
+    set({ loading: true, error: null });
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select(`*`)
+        .order("name")
+
+      if (error) throw error;
+
+      set({ categories: data || [], loading: false });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to fetch categories',
+        loading: false
+      });
+    }
+  },
+
   // Fetch menu items with ratings (main function)
   fetchMenuItemsWithRatings: async (restaurantId?: string) => {
     const targetRestaurantId = restaurantId || get().currentRestaurantId;
@@ -95,8 +110,18 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         .from('menu_items')
         .select(`
           *,
-          category:categories(name),
-          ratings:ratings(rating)
+          category:categories(id, name),
+          ratings:ratings(
+            id, 
+            rating, 
+            comment,
+            created_at,
+            customer: customers(
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
         `)
         .eq('restaurant', targetRestaurantId)
         .eq('is_available', true)
@@ -124,6 +149,8 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         error: error.message || 'Failed to fetch menu items with ratings',
         loading: false
       });
+    } finally {
+      set({loading: false})
     }
   },
 
@@ -251,34 +278,26 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
   },
 
   // Create new menu item
-  createMenuItem: async (menuItemData: Partial<MenuItem>) => {
-    const targetRestaurantId = get().currentRestaurantId;
-    if (!targetRestaurantId) {
-      set({ error: 'No restaurant ID provided' });
-      return null;
-    }
-
+  createMenuItem: async (menuItemData: MenuItemFormData) => {
     try {
-      const { data, error } = await supabase
+      // Perform the insert operation
+      const { error } = await supabase
         .from('menu_items')
         .insert([{
-          ...menuItemData,
-          restaurant: targetRestaurantId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          ...menuItemData
         }])
-        .select()
-        .single();
 
       if (error) throw error;
 
-      // Refresh the menu items
-      get().refreshMenuItems();
-
-      return data;
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Menu item created successfully!'
+      });
+      await get().fetchMenuItemsWithRatings(menuItemData.restaurant)
+      router.back()
     } catch (error: any) {
       set({ error: error.message || 'Failed to create menu item' });
-      return null;
     }
   },
 

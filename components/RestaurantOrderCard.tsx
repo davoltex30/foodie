@@ -1,9 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Clock, CircleCheck as CheckCircle, Circle as XCircle, Bell, ChevronDown, MapPin } from 'lucide-react-native';
-import { Order } from '@/types';
+import {
+  Bell,
+  Clock,
+  CheckCircle,
+  XCircle,
+  UserCheck,
+  Truck,
+  Package,
+  Home,
+  Undo2,
+  ChefHat, MapPin
+} from 'lucide-react-native';import { Order } from '@/types';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { format } from 'date-fns';
 
 interface RestaurantOderCardProps {
   order: Order;
@@ -29,14 +40,24 @@ export const RestaurantOderCard = ({
     switch (status) {
       case 'pending':
         return <Bell size={20} color="#FF9800" />;
+      case 'confirmed':
+        return <UserCheck size={20} color="#2196F3" />;
       case 'preparing':
-        return <Clock size={20} color="#2196F3" />;
-      case 'ready':
-        return <CheckCircle size={20} color="#4CAF50" />;
-      case 'completed':
+        return <ChefHat size={20} color="#FF5722" />;
+      case 'ready_for_pickup':
+        return <Package size={20} color="#4CAF50" />;
+      case 'picked_up':
+        return <Truck size={20} color="#9C27B0" />;
+      case 'on_the_way':
+        return <Truck size={20} color="#673AB7" />;
+      case 'arrived':
+        return <Home size={20} color="#E91E63" />;
+      case 'delivered':
         return <CheckCircle size={20} color="#4CAF50" />;
       case 'cancelled':
         return <XCircle size={20} color="#F44336" />;
+      case 'refunded':
+        return <Undo2 size={20} color="#795548" />;
       default:
         return <Clock size={20} color="#999999" />;
     }
@@ -45,34 +66,82 @@ export const RestaurantOderCard = ({
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'pending':
-        return '#FF9800';
+        return '#FF9800'; // Orange - waiting
+      case 'confirmed':
+        return '#2196F3'; // Blue - accepted
       case 'preparing':
-        return '#2196F3';
-      case 'ready':
-        return '#4CAF50';
-      case 'completed':
-        return '#4CAF50';
+        return '#FF5722'; // Deep Orange - cooking
+      case 'ready_for_pickup':
+        return '#4CAF50'; // Green - ready
+      case 'picked_up':
+        return '#9C27B0'; // Purple - picked up
+      case 'on_the_way':
+        return '#673AB7'; // Deep Purple - en route
+      case 'arrived':
+        return '#E91E63'; // Pink - arrived at location
+      case 'delivered':
+        return '#4CAF50'; // Green - completed
       case 'cancelled':
-        return '#F44336';
+        return '#F44336'; // Red - cancelled
+      case 'refunded':
+        return '#795548'; // Brown - refunded
       default:
-        return '#999999';
+        return '#999999'; // Gray - unknown
     }
   };
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
       case 'pending':
-        return 'New Order';
+        return 'Order Received';
+      case 'confirmed':
+        return 'Order Confirmed';
       case 'preparing':
-        return 'Preparing';
-      case 'ready':
-        return 'Ready';
-      case 'completed':
-        return 'Completed';
+        return 'Preparing Food';
+      case 'ready_for_pickup':
+        return 'Ready for Pickup';
+      case 'picked_up':
+        return 'Picked Up';
+      case 'on_the_way':
+        return 'On the Way';
+      case 'arrived':
+        return 'Arrived at Location';
+      case 'delivered':
+        return 'Delivered';
       case 'cancelled':
         return 'Cancelled';
+      case 'refunded':
+        return 'Refunded';
       default:
         return status;
+    }
+  };
+
+  // Optional: Get a more detailed description for each status
+  const getStatusDescription = (status: Order['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'Your order has been received and is waiting for restaurant confirmation';
+      case 'confirmed':
+        return 'The restaurant has accepted your order and will start preparing soon';
+      case 'preparing':
+        return 'The kitchen is preparing your delicious food';
+      case 'ready_for_pickup':
+        return 'Your order is ready and waiting for a courier to pick it up';
+      case 'picked_up':
+        return 'A courier has picked up your order and is on the way';
+      case 'on_the_way':
+        return 'Your food is being delivered to your location';
+      case 'arrived':
+        return 'The courier has arrived at your delivery location';
+      case 'delivered':
+        return 'Your order has been successfully delivered. Enjoy!';
+      case 'cancelled':
+        return 'This order has been cancelled';
+      case 'refunded':
+        return 'This order has been refunded';
+      default:
+        return 'Order status information';
     }
   };
 
@@ -82,7 +151,7 @@ export const RestaurantOderCard = ({
         <View style={styles.orderInfo}>
           <Text style={styles.orderId}>Order #{order.id}</Text>
           <Text style={styles.orderTime}>
-            {order.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {format(order.created_at, "dd-mm-yy")}
           </Text>
         </View>
 
@@ -98,17 +167,17 @@ export const RestaurantOderCard = ({
         <View style={styles.deliveryInfo}>
           <MapPin size={16} color="#666666" />
           <Text style={styles.deliveryAddress}>
-            {order.deliveryAddress}
+            {/*{order.deliveryAddress}*/}
           </Text>
         </View>
 
-        <Text style={styles.subTotal}>Sub-Total: ${order.totalAmount.toFixed(2)}</Text>
+        <Text style={styles.subTotal}>Sub-Total: ${order.total_amount.toFixed(2)}</Text>
         <Text style={styles.deliveryFee}>Delivery fee: ${order.deliveryFee.toFixed(2)}</Text>
-        <Text style={styles.orderAmount}>Total: ${(order.totalAmount + order.deliveryFee).toFixed(2)}</Text>
+        <Text style={styles.orderAmount}>Total: ${(order.total_amount + order.deliveryFee).toFixed(2)}</Text>
 
-        {order.estimatedDelivery && (order.status === 'preparing' || order.status === 'ready') && (
+        {order.est_delivery_time && (order.status === 'preparing' || order.status === 'ready_for_pickup') && (
           <Text style={styles.estimatedTime}>
-            Est. delivery: {order.estimatedDelivery.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            Est. delivery: {order.est_delivery_time} mins
           </Text>
         )}
       </View>
@@ -122,7 +191,7 @@ export const RestaurantOderCard = ({
           size="sm"
           style={styles.actionButton}
         />
-        {(onTrackOrder && (order.status === 'preparing' || order.status === 'ready')) && (
+        {(onTrackOrder && (order.status === 'preparing' || order.status === 'ready_for_pickup')) && (
           <Button
             title="Track Order"
             onPress={onTrackOrder}
@@ -160,7 +229,7 @@ export const RestaurantOderCard = ({
           />
         )}
 
-        {onComplete && order.status === 'ready' && (
+        {onComplete && order.status === 'ready_for_pickup' && (
           <Button
             title="Complete"
             onPress={onComplete}
