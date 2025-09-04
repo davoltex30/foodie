@@ -5,9 +5,10 @@ import { ArrowLeft } from 'lucide-react-native';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/authStore';
-import { UserRole } from '@/types';
+import { CustomJwtPayload, UserRole } from '@/types';
 import { supabase } from '@/utils/supabase';
 import Toast from 'react-native-toast-message';
+import { jwtDecode } from 'jwt-decode';
 
 export default function LoginScreen() {
   const { role } = useLocalSearchParams<{ role: UserRole }>();
@@ -17,6 +18,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchRestaurantProfile = useAuthStore(state => state.fetchRestaurantProfile);
+  const fetchCustomerProfile = useAuthStore(state => state.fetchCustomerProfile);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -46,6 +48,7 @@ export default function LoginScreen() {
         password: password
       });
       if (error) {
+        console.log(error)
         setErrors(prev => ({
           ...prev,
           general: error.message
@@ -57,22 +60,25 @@ export default function LoginScreen() {
           text2: error.message
         });
       }
-
       // Store session data in auth store
       useAuthStore.setState({
         isAuthenticated: true,
         session: session,
       });
 
-      if (session &&  session.user.user_metadata.role === 'customer') {
-        router.replace('/(customer)');
-      } else {
-        router.replace('/(restaurant)');
-      }
-
-      // Fetch restaurant profile if user is a restaurant
-      if (session?.user.user_metadata.role === 'restaurant') {
-        await fetchRestaurantProfile(session.user.id)
+      if (session) {
+        try {
+          const jwt = jwtDecode<CustomJwtPayload>(session.access_token);
+          if (session &&  jwt.user_role === 'customer') {
+            await fetchCustomerProfile(session.user.id)
+            router.replace('/(customer)');
+          } else if (session &&  jwt.user_role === 'restaurant'){
+            await fetchRestaurantProfile(session.user.id)
+            router.replace('/(restaurant)');
+          }
+        } catch (error) {
+          console.error('Error decoding JWT:', error);
+        }
       }
 
     } catch (error) {

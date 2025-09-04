@@ -1,6 +1,6 @@
 // stores/useRestaurantStore.ts
 import { create } from 'zustand';
-import { MenuItem, Category, MenuItemFormData } from '@/types';
+import { MenuItem, Category, MenuItemFormData, Restaurant } from '@/types';
 import { supabase } from '@/utils/supabase';
 import Toast from 'react-native-toast-message';
 import { router } from 'expo-router';
@@ -12,12 +12,15 @@ interface RestaurantState {
   loading: boolean;
   error: string | null;
   currentRestaurantId: string | null;
+  restaurants: Restaurant[];
 
   // Actions
   setCurrentRestaurant: (restaurantId: string) => void;
   fetchMenuItems: (restaurantId?: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
-  fetchMenuItemsWithRatings: (restaurantId?: string) => Promise<void>;
+  fetchRestaurants: () => Promise<void>;
+  fetchAllMenuItems: () => Promise<void>;
+  fetchRestaurantMenuItems: (restaurantId?: string) => Promise<void>;
   searchMenuItems: (searchTerm: string, restaurantId?: string) => Promise<MenuItem[]>;
   getMenuByCategory: (categoryId: string, restaurantId?: string) => Promise<MenuItem[]>;
   getAvailableItemsWithPrepTime: (maxPrepTime?: number, restaurantId?: string) => Promise<MenuItem[]>;
@@ -36,6 +39,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
   error: null,
   currentRestaurantId: null,
   categories: [],
+  restaurants: [],
 
   // Set current restaurant
   setCurrentRestaurant: (restaurantId: string) => {
@@ -95,8 +99,22 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
     }
   },
 
+
+  //Fetch all active restaurants
+  fetchRestaurants: async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_all_restaurants_with_coordinates")
+
+      if (error) throw error;
+
+      set({ restaurants: data || [] });
+    } catch (error: any) {
+      console.log(error)
+    }
+  },
+
   // Fetch menu items with ratings (main function)
-  fetchMenuItemsWithRatings: async (restaurantId?: string) => {
+  fetchRestaurantMenuItems: async (restaurantId?: string) => {
     const targetRestaurantId = restaurantId || get().currentRestaurantId;
     if (!targetRestaurantId) {
       set({ error: 'No restaurant ID provided' });
@@ -124,7 +142,6 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
           )
         `)
         .eq('restaurant', targetRestaurantId)
-        .eq('is_available', true)
         .order('category');
 
       if (error) throw error;
@@ -151,6 +168,50 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
       });
     } finally {
       set({loading: false})
+    }
+  },
+
+  // Fetch menu items with ratings (main function)
+  fetchAllMenuItems: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select(`
+          *,
+          restaurant:restaurants(restaurant_id, name),
+          category:categories(id, name),
+          ratings:ratings(
+            id, 
+            rating, 
+            comment,
+            created_at,
+            customer: customers(
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('is_available', true)
+
+      if (error) throw error;
+
+      // Calculate average ratings
+      const menuItemsWithRatings = (data || []).map(item => {
+        const ratings = item.ratings.map((r: Rating) => r.rating);
+        const avgRating = ratings.length > 0
+          ? ratings.reduce((sum: any, rating: any) => sum + rating, 0) / ratings.length
+          : 0;
+
+        return {
+          ...item,
+          avgRating: Math.round(avgRating * 10) / 10,
+          ratingCount: ratings.length
+        };
+      });
+      set({ menuItems: menuItemsWithRatings});
+    } catch (error: any) {
+      console.log("error fetching all menuItems", error)
     }
   },
 
@@ -294,7 +355,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         text1: 'Success',
         text2: 'Menu item created successfully!'
       });
-      await get().fetchMenuItemsWithRatings(menuItemData.restaurant)
+      await get().fetchRestaurantMenuItems(menuItemData.restaurant)
       router.back()
     } catch (error: any) {
       set({ error: error.message || 'Failed to create menu item' });
@@ -365,7 +426,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
 
   // Refresh menu items
   refreshMenuItems: async () => {
-    await get().fetchMenuItemsWithRatings();
+    await get().fetchRestaurantMenuItems();
   },
 
   // Clear error

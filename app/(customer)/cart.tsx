@@ -43,7 +43,7 @@ export default function CustomerCartScreen() {
   const handleCheckout = (restaurantId: string) => {
     const restaurantItems = itemsByRestaurant[restaurantId];
     const restaurantTotal = restaurantItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    console.log(`Checkout for ${restaurantItems[0].restaurantName}: $${restaurantTotal.toFixed(2)}`);
+    console.log(`Checkout for ${restaurantItems[0].restaurant.name}: $${restaurantTotal.toFixed(2)}`);
     // Here you would navigate to checkout screen
   };
 
@@ -60,15 +60,14 @@ export default function CustomerCartScreen() {
         {restaurantIds.map((restaurantId) => {
           const restaurantItems = itemsByRestaurant[restaurantId];
           const restaurantTotal = restaurantItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          const restaurantName = restaurantItems[0].restaurantName;
+          const restaurantName = restaurantItems[0].restaurant.name;
 
           return (
             <Card key={restaurantId} style={styles.restaurantCard}>
               <Text style={styles.restaurantName}>{restaurantName}</Text>
-              
               {restaurantItems.map((item) => (
                 <View key={item.id} style={styles.cartItem}>
-                  <Image source={{ uri: item.image }} style={styles.itemImage} />
+                  <Image source={{ uri: item.image_url }} style={styles.itemImage} />
                   
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>{item.name}</Text>

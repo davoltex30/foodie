@@ -28,7 +28,7 @@ export default function RestaurantMenuScreen() {
   const restaurantProfile = useAuthStore(state => state.restaurantProfile)
   const menuItems = useRestaurantStore(state => state.menuItems)
   const loading = useRestaurantStore(state => state.loading)
-  const fetchMenuItemsWithRatings = useRestaurantStore(state => state.fetchMenuItemsWithRatings)
+  const fetchMenuItemsWithRatings = useRestaurantStore(state => state.fetchRestaurantMenuItems)
 
   useEffect(() => {
     fetchMenuItemsWithRatings(restaurantProfile?.restaurant_id)

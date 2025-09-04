@@ -86,7 +86,7 @@ export default function RestaurantSettingsScreen() {
       subtitle: 'Manage restaurant staff access',
       onPress: () => console.log('Staff management pressed')
     }
-  ];
+  ];7
 
   const businessSettings = [
     {

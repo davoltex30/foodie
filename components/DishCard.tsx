@@ -1,42 +1,42 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Star, Plus } from 'lucide-react-native';
-import { Dish } from '@/types';
+import { MenuItem } from '@/types';
 import { Card } from './ui/Card';
 
 interface DishCardProps {
-  dish: Dish;
-  onAddToCart: (dish: Dish) => void;
-  onPress?: (dish: Dish) => void;
+  dish: MenuItem;
+  onAddToCart: (dish: MenuItem) => void;
+  onPress?: (dish: MenuItem) => void;
 }
 
 export function DishCard({ dish, onAddToCart, onPress }: DishCardProps) {
   return (
     <Card style={styles.card}>
       <TouchableOpacity onPress={() => onPress?.(dish)} activeOpacity={0.8}>
-        <Image source={{ uri: dish.image }} style={styles.image} />
+        <Image source={{ uri: dish.image_url }} style={styles.image} />
         <View style={styles.content}>
           <Text style={styles.name} numberOfLines={1}>{dish.name}</Text>
           <Text style={styles.description} numberOfLines={2}>{dish.description}</Text>
           
           <View style={styles.ratingRow}>
             <Star size={14} color="#FFD700" fill="#FFD700" />
-            <Text style={styles.rating}>{dish.rating}</Text>
-            <Text style={styles.reviewCount}>({dish.reviewCount})</Text>
+            <Text style={styles.rating}>{dish.avgRating}</Text>
+            <Text style={styles.reviewCount}>({dish.ratingCount})</Text>
           </View>
           
           <View style={styles.footer}>
             <Text style={styles.price}>${dish.price.toFixed(2)}</Text>
             <TouchableOpacity
-              style={[styles.addButton, !dish.isAvailable && styles.disabledButton]}
-              onPress={() => dish.isAvailable && onAddToCart(dish)}
-              disabled={!dish.isAvailable}
+              style={[styles.addButton, !dish.is_available && styles.disabledButton]}
+              onPress={() => dish.is_available && onAddToCart(dish)}
+              disabled={!dish.is_available}
             >
               <Plus size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           
-          {!dish.isAvailable && (
+          {!dish.is_available && (
             <Text style={styles.unavailable}>Currently unavailable</Text>
           )}
         </View>

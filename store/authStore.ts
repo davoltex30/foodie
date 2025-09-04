@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { Session } from '@supabase/auth-js/src/lib/types'
-import { CustomerProfile, RestaurantProfile } from '@/types';
+import { CustomerProfile, CustomJwtPayload, RestaurantProfile } from '@/types';
 import { supabase } from '@/utils/supabase';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -32,18 +33,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const { fetchRestaurantProfile, fetchCustomerProfile} = get()
 
-      if (session?.user.user_metadata.role === 'restaurant') {
-        await fetchRestaurantProfile(session.user.id)
-      }else if(session?.user.user_metadata.role === 'customer') {
-        await fetchCustomerProfile(session.user.id)
-      }else{
-        //Todo add fetch courier profile here
+      if (session) {
+        try {
+          const jwt = jwtDecode<CustomJwtPayload>(session.access_token);
+          if (jwt.user_role === 'restaurant') {
+            await fetchRestaurantProfile(session.user.id)
+            router.replace('/(restaurant)');
+          }else if(jwt.user_role === 'customer') {
+            await fetchCustomerProfile(session.user.id)
+            router.replace('/(customer)');
+          }else{
+            //Todo add fetch courier profile here
+          }
+        } catch (error) {
+          console.error('Error decoding JWT:', error);
+        }
       }
-      if (session &&  session.user.user_metadata.role === 'customer') {
-        router.replace('/(customer)');
-      } else {
-        router.replace('/(restaurant)');
-      }
+
     } catch (error) {
       set({ session: null, isAuthenticated: false, restaurantProfile: null });
     }

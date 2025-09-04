@@ -66,7 +66,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   getItemsByRestaurant: () => {
     const { items } = get();
     return items.reduce((acc, item) => {
-      const restaurantId = item.restaurantId;
+      const restaurantId = item.restaurant;
       if (!acc[restaurantId]) {
         acc[restaurantId] = [];
       }

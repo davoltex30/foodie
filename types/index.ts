@@ -1,3 +1,4 @@
+import { JwtPayload } from 'jwt-decode';
 
 export type UserRole = 'customer' | 'restaurant';
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready_for_pickup' | 'picked_up' | 'delivered' | 'on_the_way' | 'arrived' | 'refunded' | 'cancelled';
@@ -15,26 +16,24 @@ export const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   'refunded': []   // final state
 };
 
+export interface CustomJwtPayload extends JwtPayload {
+  user_role?: string;  // Make it optional to handle missing values safely
+}
+
 export interface Restaurant {
-  id: string;
+  restaurant_id: string;
   name: string;
-  description: string;
-  image: string;
-  rating: number;
-  reviewCount: number;
-  deliveryTime: string;
-  deliveryFee: number;
-  location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  };
-  cuisineType: string;
-  isOpen: boolean;
-  operatingHours: {
-    open: string;
-    close: string;
-  };
+  email: string;
+  description?: string;
+  phone_number?: string,
+  is_active: boolean,
+  logo_url?: string,
+  banner_url?: string,
+  latitude?: number,
+  longitude?: number,
+  created_at: string,
+  updated_at: string,
+
 }
 
 export interface RestaurantProfile {
@@ -69,21 +68,6 @@ export interface CustomerProfile {
   avatar_url: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface Dish {
-  id: string;
-  restaurant: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  // rating: number;
-  // reviewCount: number;
-  is_available: boolean;
-  // ingredients: string[];
-  est_prep_time: number;
 }
 
 export interface Category {
@@ -122,7 +106,10 @@ export interface MenuItem {
   image_url: string | null;
   is_available: boolean;
   est_prep_time: number;
-  restaurant: string;
+  restaurant: {
+    restaurant_id: string;
+    name: string;
+  };
   category?: {
     id: string,
     name: string
@@ -142,9 +129,8 @@ export interface MenuItem {
   ratingCount?: number;
 }
 
-export interface CartItem extends Dish {
+export interface CartItem extends MenuItem {
   quantity: number;
-  restaurantName: string;
 }
 
 export interface Order {

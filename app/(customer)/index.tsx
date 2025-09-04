@@ -28,17 +28,17 @@ const promoData = [
 
 export default function CustomerHomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuthStore();
-  const { restaurants, dishes, fetchRestaurants, fetchDishes } = useRestaurantStore();
+  const { customerProfile } = useAuthStore();
+  const { restaurants, menuItems, fetchRestaurants, fetchAllMenuItems } = useRestaurantStore();
   const { addItem } = useCartStore();
 
   useEffect(() => {
     fetchRestaurants();
-    fetchDishes();
+    fetchAllMenuItems();
   }, []);
 
   const handleAddToCart = (dish: Dish) => {
-    const restaurant = restaurants.find(r => r.id === dish.restaurantId);
+    const restaurant = restaurants.find(r => r.restaurant_id === dish.restaurantId);
     addItem({
       ...dish,
       quantity: 1,
@@ -51,15 +51,16 @@ export default function CustomerHomeScreen() {
     console.log('Navigate to restaurant:', restaurant.id);
   };
 
-  const filteredDishes = dishes.filter(dish =>
+  const filteredDishes = menuItems.filter(dish =>
     dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     dish.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredRestaurants = restaurants.filter(restaurant =>
-    restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    restaurant.cuisineType.toLowerCase().includes(searchQuery.toLowerCase())
+    restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  console.log(menuItems)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,7 +68,7 @@ export default function CustomerHomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello, {user?.name}!</Text>
+            <Text style={styles.greeting}>Hello, {customerProfile?.first_name} {customerProfile?.first_name}!</Text>
             <Text style={styles.subGreeting}>What would you like to eat today?</Text>
           </View>
           <TouchableOpacity style={styles.notificationButton}>
@@ -122,7 +123,7 @@ export default function CustomerHomeScreen() {
           <Text style={styles.sectionTitle}>Nearby Restaurants</Text>
           {filteredRestaurants.map((restaurant) => (
             <RestaurantCard
-              key={restaurant.id}
+              key={restaurant.restaurant_id}
               restaurant={restaurant}
               onPress={handleRestaurantPress}
             />
