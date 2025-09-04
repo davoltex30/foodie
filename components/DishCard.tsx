@@ -13,7 +13,7 @@ interface DishCardProps {
 export function DishCard({ dish, onAddToCart, onPress }: DishCardProps) {
   return (
     <Card style={styles.card}>
-      <TouchableOpacity onPress={() => onPress?.(dish)} activeOpacity={0.8}>
+      <TouchableOpacity onPress={() => onPress?.(dish)} activeOpacity={0.8} style={styles.cardContent}>
         <Image source={{ uri: dish.image_url }} style={styles.image} />
         <View style={styles.content}>
           <Text style={styles.name} numberOfLines={1}>{dish.name}</Text>
@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
   card: {
     padding: 0,
     marginBottom: 16,
+  },
+  cardContent: {
+    flex: 1,
   },
   image: {
     width: '100%',

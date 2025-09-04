@@ -13,35 +13,35 @@ export function RestaurantCard({ restaurant, onPress }: RestaurantCardProps) {
   return (
     <Card style={styles.card}>
       <TouchableOpacity onPress={() => onPress(restaurant)} activeOpacity={0.8}>
-        <Image source={{ uri: restaurant.image }} style={styles.image} />
+        <Image source={{ uri: restaurant.banner_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800' }} style={styles.image} />
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.name}>{restaurant.name}</Text>
-            <View style={[styles.statusBadge, restaurant.isOpen ? styles.openBadge : styles.closedBadge]}>
-              <Text style={[styles.statusText, restaurant.isOpen ? styles.openText : styles.closedText]}>
-                {restaurant.isOpen ? 'Open' : 'Closed'}
+            <View style={[styles.statusBadge, restaurant.is_active ? styles.openBadge : styles.closedBadge]}>
+              <Text style={[styles.statusText, restaurant.is_active ? styles.openText : styles.closedText]}>
+                {restaurant.is_active ? 'Open' : 'Closed'}
               </Text>
             </View>
           </View>
           
           <Text style={styles.description} numberOfLines={2}>{restaurant.description}</Text>
-          <Text style={styles.cuisineType}>{restaurant.cuisineType}</Text>
+          <Text style={styles.cuisineType}>Restaurant</Text>
           
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
               <Star size={14} color="#FFD700" fill="#FFD700" />
-              <Text style={styles.infoText}>{restaurant.rating}</Text>
-              <Text style={styles.reviewCount}>({restaurant.reviewCount})</Text>
+              <Text style={styles.infoText}>4.8</Text>
+              <Text style={styles.reviewCount}>(127)</Text>
             </View>
             
             <View style={styles.infoItem}>
               <Clock size={14} color="#666666" />
-              <Text style={styles.infoText}>{restaurant.deliveryTime}</Text>
+              <Text style={styles.infoText}>25-35 min</Text>
             </View>
             
             <View style={styles.infoItem}>
               <DollarSign size={14} color="#666666" />
-              <Text style={styles.infoText}>${restaurant.deliveryFee}</Text>
+              <Text style={styles.infoText}>$5.99</Text>
             </View>
           </View>
         </View>

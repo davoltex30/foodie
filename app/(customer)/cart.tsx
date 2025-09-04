@@ -41,10 +41,7 @@ export default function CustomerCartScreen() {
   };
 
   const handleCheckout = (restaurantId: string) => {
-    const restaurantItems = itemsByRestaurant[restaurantId];
-    const restaurantTotal = restaurantItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    console.log(`Checkout for ${restaurantItems[0].restaurant.name}: $${restaurantTotal.toFixed(2)}`);
-    // Here you would navigate to checkout screen
+    router.push(`/(customer)/checkout?restaurantId=${restaurantId}`);
   };
 
   return (

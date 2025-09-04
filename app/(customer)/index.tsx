@@ -47,8 +47,7 @@ export default function CustomerHomeScreen() {
   };
 
   const handleRestaurantPress = (restaurant: Restaurant) => {
-    // Navigate to restaurant details
-    console.log('Navigate to restaurant:', restaurant.id);
+    router.push(`/(customer)/restaurant-details?restaurantId=${restaurant.restaurant_id}`);
   };
 
   const filteredDishes = menuItems.filter(dish =>
