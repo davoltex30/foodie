@@ -54,7 +54,8 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "rn-phone-input-field": "^1.1.9",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "expo-asset": "~11.1.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

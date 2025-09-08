@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             router.replace('/(restaurant)');
           }else if(jwt.user_role === 'customer') {
             await fetchCustomerProfile(session.user.id)
-            router.replace('/(customer)');
+            router.replace('/(customer)/home');
           }else{
             //Todo add fetch courier profile here
           }

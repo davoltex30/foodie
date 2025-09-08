@@ -7,7 +7,8 @@ import { useRestaurantStore } from '@/store/restaurantStore';
 import { useCartStore } from '@/store/cartStore';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { DishCard } from '@/components/DishCard';
-import { Dish, Restaurant } from '@/types';
+import { Dish, MenuItem, Restaurant } from '@/types';
+import { router } from 'expo-router';
 
 const promoData = [
   {
@@ -46,8 +47,11 @@ export default function CustomerHomeScreen() {
     });
   };
 
-  const handleRestaurantPress = (restaurant: Restaurant) => {
-    router.push(`/(customer)/restaurant-details?restaurantId=${restaurant.restaurant_id}`);
+  const handleRestaurantPress = (restaurantId: string) => {
+    router.push(`/(customer)/home/restaurant-details?restaurantId=${restaurantId}`);
+  };
+  const handleMenuItemPress = (menuItemId: string) => {
+    router.push(`/(customer)/home/menu-item-details?itemId=${menuItemId}`);
   };
 
   const filteredDishes = menuItems.filter(dish =>
@@ -59,7 +63,6 @@ export default function CustomerHomeScreen() {
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log(menuItems)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -108,13 +111,17 @@ export default function CustomerHomeScreen() {
         {/* Popular Dishes */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular Dishes</Text>
-          {filteredDishes.map((dish) => (
-            <DishCard
-              key={dish.id}
-              dish={dish}
-              onAddToCart={handleAddToCart}
-            />
-          ))}
+          <View style={styles.menuGrid}>
+            {filteredDishes.map((dish) => (
+              <DishCard
+                key={dish.id}
+                dish={dish}
+                onAddToCart={handleAddToCart}
+                onPress={handleMenuItemPress}
+              />
+            ))}
+          </View>
+
         </View>
 
         {/* Nearby Restaurants */}
@@ -223,5 +230,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333333',
     marginBottom: 16,
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
 });

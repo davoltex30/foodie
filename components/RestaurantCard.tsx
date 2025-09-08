@@ -6,13 +6,13 @@ import { Card } from './ui/Card';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
-  onPress: (restaurant: Restaurant) => void;
+  onPress: (restaurantId: string) => void;
 }
 
 export function RestaurantCard({ restaurant, onPress }: RestaurantCardProps) {
   return (
     <Card style={styles.card}>
-      <TouchableOpacity onPress={() => onPress(restaurant)} activeOpacity={0.8}>
+      <TouchableOpacity onPress={() => onPress(restaurant.restaurant_id)} activeOpacity={0.8}>
         <Image source={{ uri: restaurant.banner_url || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800' }} style={styles.image} />
         <View style={styles.content}>
           <View style={styles.header}>

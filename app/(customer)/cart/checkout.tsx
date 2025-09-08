@@ -116,7 +116,7 @@ export default function CheckoutScreen() {
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
               </View>
-              <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+              <Text style={styles.itemPrice}>FCFA{(item.price * item.quantity).toFixed(2)}</Text>
             </View>
           ))}
         </Card>

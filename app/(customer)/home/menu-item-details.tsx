@@ -26,6 +26,8 @@ export default function MenuItemDetailsScreen() {
 
   const menuItem = menuItems.find(item => item.id === itemId);
 
+  console.log(menuItem)
+
   if (!menuItem) {
     return (
       <SafeAreaView style={styles.container}>
@@ -71,34 +73,38 @@ export default function MenuItemDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#333333" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Menu Item</Text>
-        <TouchableOpacity 
-          onPress={() => setIsFavorite(!isFavorite)} 
-          style={styles.favoriteButton}
-        >
-          <Heart 
-            size={24} 
-            color={isFavorite ? "#FF6B35" : "#666666"} 
-            fill={isFavorite ? "#FF6B35" : "transparent"}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} bounces={false} overScrollMode={"never"}>
         {/* Hero Image */}
-        <Image source={{ uri: menuItem.image_url }} style={styles.heroImage} />
+        <View style={{position: "relative"}}>
+          <Image source={{ uri: menuItem.image_url }} style={styles.heroImage} />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={24} color="#333333" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setIsFavorite(!isFavorite)}
+              style={styles.favoriteButton}
+            >
+              <Heart
+                size={24}
+                color={isFavorite ? "#FF6B35" : "#666666"}
+                fill={isFavorite ? "#FF6B35" : "transparent"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+
+        <View style={styles.restaurantContainer}>
+          <Image source={require("./../../../assets/images/restaurantIcon.png")} />
+          <Text style={{fontSize: 14, fontWeight: "bold", }}>{menuItem.restaurant.name}</Text>
+        </View>
 
         {/* Basic Info */}
         <Card style={styles.section}>
           <View style={styles.itemHeader}>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{menuItem.name}</Text>
-              <Text style={styles.restaurantName}>from {menuItem.restaurant.name}</Text>
-            </View>
+            <Text style={styles.itemName}>{menuItem.name}</Text>
             <View style={[
               styles.availabilityBadge,
               menuItem.is_available ? styles.availableBadge : styles.soldOutBadge
@@ -163,7 +169,7 @@ export default function MenuItemDetailsScreen() {
 
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Price</Text>
-              <Text style={styles.totalPrice}>${(menuItem.price * quantity).toFixed(2)}</Text>
+              <Text style={styles.totalPrice}><Text style={{ fontSize: 12 }}>FCFA </Text>{(menuItem.price * quantity)}</Text>
             </View>
           </View>
         </Card>
@@ -171,7 +177,7 @@ export default function MenuItemDetailsScreen() {
         {/* Reviews Preview */}
         {menuItem.ratings && menuItem.ratings.length > 0 && (
           <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent Reviews</Text>
+            <Text style={styles.reviewTitle}>Recent Reviews</Text>
             {menuItem.ratings.slice(0, 3).map((review) => (
               <View key={review.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
@@ -202,7 +208,7 @@ export default function MenuItemDetailsScreen() {
       {/* Add to Cart Footer */}
       <View style={styles.footer}>
         <Button
-          title={`Add to Cart - $${(menuItem.price * quantity).toFixed(2)}`}
+          title={`Add to Cart - FCFA ${(menuItem.price * quantity)}`}
           onPress={handleAddToCart}
           disabled={!menuItem.is_available}
           variant="primary"
@@ -225,12 +231,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    width: '100%'
   },
   backButton: {
     padding: 8,
+    backgroundColor: "white",
+    borderRadius: 20
   },
   title: {
     fontSize: 20,
@@ -241,17 +249,39 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     padding: 8,
+    backgroundColor: "white",
+    borderRadius: 20
   },
   content: {
     flex: 1,
+  },
+  restaurantContainer: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    gap: 10,
+    padding: 16,
+    backgroundColor: "white",
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity:  0.16,
+    shadowRadius: 1.51,
+    elevation: 2
   },
   heroImage: {
     width: '100%',
     height: 250,
     resizeMode: 'cover',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   section: {
-    margin: 16,
+    margin: 8,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -330,6 +360,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
   categoryLabel: {
     fontSize: 14,
     color: '#666666',
@@ -375,6 +411,7 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginHorizontal: 20,
   },
+
   priceContainer: {
     alignItems: 'flex-end',
   },

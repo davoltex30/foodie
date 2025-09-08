@@ -71,7 +71,7 @@ export default function LoginScreen() {
           const jwt = jwtDecode<CustomJwtPayload>(session.access_token);
           if (session &&  jwt.user_role === 'customer') {
             await fetchCustomerProfile(session.user.id)
-            router.replace('/(customer)');
+            router.replace('/(customer)/home');
           } else if (session &&  jwt.user_role === 'restaurant'){
             await fetchRestaurantProfile(session.user.id)
             router.replace('/(restaurant)');

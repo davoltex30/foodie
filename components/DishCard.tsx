@@ -1,32 +1,40 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Star, Plus } from 'lucide-react-native';
+import { Star, Plus, Clock } from 'lucide-react-native';
 import { MenuItem } from '@/types';
 import { Card } from './ui/Card';
 
 interface DishCardProps {
   dish: MenuItem;
   onAddToCart: (dish: MenuItem) => void;
-  onPress?: (dish: MenuItem) => void;
+  onPress?: (id: string) => void;
 }
 
 export function DishCard({ dish, onAddToCart, onPress }: DishCardProps) {
   return (
     <Card style={styles.card}>
-      <TouchableOpacity onPress={() => onPress?.(dish)} activeOpacity={0.8} style={styles.cardContent}>
+      <TouchableOpacity onPress={() => onPress?.(dish.id)} activeOpacity={0.8} style={styles.cardContent}>
         <Image source={{ uri: dish.image_url }} style={styles.image} />
         <View style={styles.content}>
           <Text style={styles.name} numberOfLines={1}>{dish.name}</Text>
-          <Text style={styles.description} numberOfLines={2}>{dish.description}</Text>
-          
-          <View style={styles.ratingRow}>
-            <Star size={14} color="#FFD700" fill="#FFD700" />
-            <Text style={styles.rating}>{dish.avgRating}</Text>
-            <Text style={styles.reviewCount}>({dish.ratingCount})</Text>
+          <Text style={styles.menuCategory}>{dish.category?.name}</Text>
+          <Text style={styles.description} numberOfLines={2} ellipsizeMode={"tail"}>{dish.description}</Text>
+
+          <View style={{flexDirection: "row", alignItems: 'center', gap: 15}}>
+            <View style={styles.ratingRow}>
+              <Star size={14} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.rating}>{dish.avgRating}</Text>
+              <Text style={styles.reviewCount}>({dish.ratingCount})</Text>
+            </View>
+
+            <View style={styles.timeContainer}>
+              <Clock size={16} color="#6B7280" />
+              <Text style={styles.time}>{dish.est_prep_time} min</Text>
+            </View>
           </View>
           
           <View style={styles.footer}>
-            <Text style={styles.price}>${dish.price.toFixed(2)}</Text>
+            <Text style={styles.price}><Text style={{ fontSize: 12 }}>FCFA </Text>{dish.price}</Text>
             <TouchableOpacity
               style={[styles.addButton, !dish.is_available && styles.disabledButton]}
               onPress={() => dish.is_available && onAddToCart(dish)}
@@ -68,6 +76,16 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 4,
   },
+  menuCategory: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#F97316',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
   description: {
     fontSize: 14,
     color: '#666666',
@@ -77,7 +95,6 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   rating: {
     fontSize: 14,
@@ -118,4 +135,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  time: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  currency: {
+    fontSize: 12, // Adjust size as needed
+  }
 });

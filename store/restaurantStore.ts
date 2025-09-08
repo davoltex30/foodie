@@ -128,6 +128,7 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
         .from('menu_items')
         .select(`
           *,
+          restaurant:restaurants(restaurant_id, name),
           category:categories(id, name),
           ratings:ratings(
             id, 
@@ -193,6 +194,8 @@ export const useRestaurantStore = create<RestaurantState>((set, get) => ({
           )
         `)
         .eq('is_available', true)
+
+      console.log(data)
 
       if (error) throw error;
 

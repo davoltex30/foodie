@@ -34,13 +34,9 @@ export default function RestaurantDetailsScreen() {
     }
   }, [restaurantId]);
 
-  const restaurantMenuItems = menuItems.filter(item => 
-    item.restaurant.restaurant_id === restaurantId
-  );
+  const categories = ['All', ...Array.from(new Set(menuItems.map(item => item.category?.name)))];
 
-  const categories = ['All', ...Array.from(new Set(restaurantMenuItems.map(item => item.category?.name)))];
-
-  const filteredItems = restaurantMenuItems.filter(item => {
+  const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category?.name === selectedCategory;
@@ -51,12 +47,11 @@ export default function RestaurantDetailsScreen() {
     addItem({
       ...dish,
       quantity: 1,
-      restaurantName: restaurant?.name || 'Unknown Restaurant'
     });
   };
 
-  const handleDishPress = (dish: MenuItem) => {
-    router.push(`/(customer)/menu-item-details?itemId=${dish.id}`);
+  const handleDishPress = (menuItemId: string) => {
+    router.push(`/(customer)/home/menu-item-details?itemId=${menuItemId}`);
   };
 
   if (!restaurant) {
@@ -78,24 +73,8 @@ export default function RestaurantDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Restaurant</Text>
-        <TouchableOpacity 
-          onPress={() => setIsFavorite(!isFavorite)} 
-          style={styles.favoriteButton}
-        >
-          <Heart 
-            size={24} 
-            color={isFavorite ? "#FF6B35" : "#FFFFFF"} 
-            fill={isFavorite ? "#FF6B35" : "transparent"}
-          />
-        </TouchableOpacity>
-      </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} overScrollMode={'never'} bounces={false}>
         {/* Restaurant Banner */}
         <View style={styles.bannerContainer}>
           <Image 
@@ -107,6 +86,23 @@ export default function RestaurantDetailsScreen() {
               source={{ uri: restaurant.logo_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200' }} 
               style={styles.logoImage} 
             />
+          </View>
+
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={24} color="#333333" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setIsFavorite(!isFavorite)}
+              style={styles.favoriteButton}
+            >
+              <Heart
+                size={24}
+                color={isFavorite ? "#FF6B35" : "#666666"}
+                fill={isFavorite ? "#FF6B35" : "transparent"}
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -219,21 +215,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    paddingTop: 60,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    zIndex: 10,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    width: '100%'
   },
   backButton: {
     padding: 8,
+    backgroundColor: 'white',
+    borderRadius: 20,
   },
   title: {
     fontSize: 20,
@@ -244,6 +238,8 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     padding: 8,
+    backgroundColor: 'white',
+    borderRadius: 20,
   },
   content: {
     flex: 1,
@@ -256,6 +252,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   logoContainer: {
     position: 'absolute',
@@ -280,6 +278,7 @@ const styles = StyleSheet.create({
   restaurantInfo: {
     marginTop: 40,
     marginHorizontal: 16,
+    marginBottom: 8
   },
   restaurantHeader: {
     flexDirection: 'row',

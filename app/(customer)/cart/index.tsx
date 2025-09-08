@@ -5,10 +5,11 @@ import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react-native';
 import { useCartStore } from '@/store/cartStore';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { router } from 'expo-router';
 
 export default function CustomerCartScreen() {
   const { items, totalAmount, updateQuantity, removeItem, clearCart, getItemsByRestaurant } = useCartStore();
-  
+
   const itemsByRestaurant = getItemsByRestaurant();
   const restaurantIds = Object.keys(itemsByRestaurant);
 
@@ -18,7 +19,7 @@ export default function CustomerCartScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Your Cart</Text>
         </View>
-        
+
         <View style={styles.emptyContainer}>
           <ShoppingBag size={80} color="#CCCCCC" />
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
@@ -41,7 +42,7 @@ export default function CustomerCartScreen() {
   };
 
   const handleCheckout = (restaurantId: string) => {
-    router.push(`/(customer)/checkout?restaurantId=${restaurantId}`);
+    router.push(`/(customer)/cart/checkout?restaurantId=${restaurantId}`);
   };
 
   return (
@@ -65,11 +66,11 @@ export default function CustomerCartScreen() {
               {restaurantItems.map((item) => (
                 <View key={item.id} style={styles.cartItem}>
                   <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-                  
+
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>{item.name}</Text>
                     <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-                    
+
                     <View style={styles.quantityContainer}>
                       <TouchableOpacity
                         style={styles.quantityButton}
@@ -77,9 +78,9 @@ export default function CustomerCartScreen() {
                       >
                         <Minus size={16} color="#FF6B35" />
                       </TouchableOpacity>
-                      
+
                       <Text style={styles.quantity}>{item.quantity}</Text>
-                      
+
                       <TouchableOpacity
                         style={styles.quantityButton}
                         onPress={() => handleQuantityChange(item.id, 1)}
@@ -88,7 +89,7 @@ export default function CustomerCartScreen() {
                       </TouchableOpacity>
                     </View>
                   </View>
-                  
+
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => removeItem(item.id)}
@@ -97,7 +98,7 @@ export default function CustomerCartScreen() {
                   </TouchableOpacity>
                 </View>
               ))}
-              
+
               <View style={styles.restaurantFooter}>
                 <Text style={styles.restaurantTotal}>
                   Subtotal: ${restaurantTotal.toFixed(2)}

@@ -31,6 +31,12 @@
         {
           "photosPermission": "The app accesses your photos to let you upload pictures"
         }
+      ],
+      [
+        "expo-asset",
+        {
+          "assets": ["./assets/images/restaurantIcon.png"]
+        }
       ]
     ],
     "experiments": {
