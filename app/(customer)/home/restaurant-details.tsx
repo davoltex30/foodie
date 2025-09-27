@@ -35,7 +35,7 @@ export default function RestaurantDetailsScreen() {
   }, [restaurantId]);
 
   const categories = ['All', ...Array.from(new Set(menuItems.map(item => item.category?.name)))];
-
+45
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
